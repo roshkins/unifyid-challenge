@@ -4,33 +4,34 @@
 <head>
   <meta charset="utf-8">
   <title>UnifyID Challenge</title>
-  <script src="./cryptico.js" />
+  <script src="./cryptico.js"></script>
 </head>
 
 <body>
   <script>
-    function getRandomValues() {
-      fetch(
-          "https://www.random.org/strings/?num=10&len=20&digits=on&upperalpha=on&loweralpha=on&unique=off&format=plain&rnd=new", {
-            method: "GET",
-            headers: new Headers({
-              "User-Agent": "roshkins@gmail.com"
-            }),
-            mode: "cors",
-            cache: "default"
-          }
-        )
-        .then(body => {
-          return body.text();
-        })
-        .then(json => {
-          console.log(json);
-        });
+  function getRandomValues() {
+  fetch(
+    "https://www.random.org/strings/?num=10&len=20&digits=on&upperalpha=on&loweralpha=on&unique=off&format=plain&rnd=new",
+    {
+      method: "GET",
+      headers: new Headers({
+        "User-Agent": "roshkins@gmail.com"
+      }),
+      mode: "cors",
+      cache: "default"
     }
-    getRandomValues();
+  )
+    .then(body => {
+      return body.text();
+    })
+    .then(json => {
+      console.log(json);
+    });
+}
+getRandomValues();
 
-    //
-  </script>
+//
+</script>
 </body>
 
 </html>
