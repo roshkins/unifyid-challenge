@@ -8,8 +8,13 @@
 </head>
 
 <body>
+  Your key pair:
+  <div id="crypto"></div>
   <script>
   function getRandomValues() {
+  //Text is [a-zA-Z0-9], which is 5.9 bits (log(62 possible characters)/log(2 base)) of entropy per character.
+  // a typical 1024 bit key requires 1024bits/5.9 bits per character = 174 characters required, rounded up.
+  //We have plenty, with 10 * 20 = 200 characters.
   fetch(
     "https://www.random.org/strings/?num=10&len=20&digits=on&upperalpha=on&loweralpha=on&unique=off&format=plain&rnd=new",
     {
@@ -24,8 +29,16 @@
     .then(body => {
       return body.text();
     })
-    .then(json => {
-      console.log(json);
+    .then(text => {
+      text = text.replace(/ \n/, "");
+      console.log(text);
+      var key = cryptico.generateRSAKey(text, 100);
+      console.log(key);
+      document.getElementById("crypto").innerHTML =
+        "Public key: <br> " +
+        cryptico.publicKeyString(key) +
+        "<br> Private Key: <br> " +
+        cryptico.privateKeyString(key);
     });
 }
 getRandomValues();
