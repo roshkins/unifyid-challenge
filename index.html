@@ -10,13 +10,36 @@
 <body>
   Your key pair:
   <div id="crypto"></div>
+  <canvas id="cvs" width="128" height="128"></canvas>
   <script>
-  function getRandomValues() {
+  //Parses out maximum entropy from input
+function parseNum(text) {
+  var NumArray = [];
+  text.split("").forEach(char => {
+    //if it's a number 0-9 interpret it
+    var charCode = char.charCodeAt(0);
+    if (!isNaN(Number(char))) {
+      NumArray.push(Number(char));
+    } else if (charCode >= 65 && charCode <= 90) {
+      // these represent 10 through 36
+      NumArray.push(charCode - 65 + 10);
+    } else if (charCode >= 97 && charCode <= 122) {
+      // these represent 36 through 62
+      NumArray.push(charCode - 97 + 36);
+    }
+  });
+  return NumArray;
+}
+
+function getRandomValues() {
   //Text is [a-zA-Z0-9], which is 5.9 bits (log(62 possible characters)/log(2 base)) of entropy per character.
   // a typical 1024 bit key requires 1024bits/5.9 bits per character = 174 characters required, rounded up.
   //We have plenty, with 10 * 20 = 200 characters.
+
+  //For the image we have 128x128 RGB pixels. That is log(255 * 3)/log(2) = 10 bits per pixel.
+  // There are 16384 pixels * 10, = 163840 characters needed.
   fetch(
-    "https://www.random.org/strings/?num=10&len=20&digits=on&upperalpha=on&loweralpha=on&unique=off&format=plain&rnd=new",
+    "https://www.random.org/strings/?num=8192&len=20&digits=on&upperalpha=on&loweralpha=on&unique=off&format=plain&rnd=new",
     {
       method: "GET",
       headers: new Headers({
@@ -36,6 +59,16 @@
       console.log(key);
       document.getElementById("crypto").innerHTML =
         "Public key: <br> " + cryptico.publicKeyString(key);
+
+      var randNum = parseNum(text);
+      var cvs = document.getElementById("cvs");
+      var context = cvs.getContext("2d");
+      var imageData = context.getImageData(0, 0, 128, 128);
+      imageData.data.forEach((num, index) => {
+        // Only allow RGB to be random
+        imageData.data[index] = index % 4 == 3 ? 255 : randNum.pop() + 128;
+      });
+      context.putImageData(imageData, 0, 0);
     });
 }
 getRandomValues();
