@@ -32,13 +32,10 @@
     .then(text => {
       text = text.replace(/ \n/, "");
       console.log(text);
-      var key = cryptico.generateRSAKey(text, 100);
+      var key = cryptico.generateRSAKey(text, 1024);
       console.log(key);
       document.getElementById("crypto").innerHTML =
-        "Public key: <br> " +
-        cryptico.publicKeyString(key) +
-        "<br> Private Key: <br> " +
-        cryptico.privateKeyString(key);
+        "Public key: <br> " + cryptico.publicKeyString(key);
     });
 }
 getRandomValues();
