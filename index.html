@@ -14,21 +14,34 @@
   <script>
   //Parses out maximum entropy from input
 function parseNum(text) {
-  var NumArray = [];
+  var numArray = [];
   text.split("").forEach(char => {
     //if it's a number 0-9 interpret it
     var charCode = char.charCodeAt(0);
     if (!isNaN(Number(char))) {
-      NumArray.push(Number(char));
+      numArray.push(Number(char));
     } else if (charCode >= 65 && charCode <= 90) {
       // these represent 10 through 36
-      NumArray.push(charCode - 65 + 10);
+      numArray.push(charCode - 65 + 10);
     } else if (charCode >= 97 && charCode <= 122) {
       // these represent 36 through 62
-      NumArray.push(charCode - 97 + 36);
+      numArray.push(charCode - 97 + 36);
     }
   });
-  return NumArray;
+
+  // We want each number to be in the range [0, 255]. It goes up to 62.
+  // We need to combine every 255/62 = 4.11, or 5 numbers to be sure we have enough data.
+
+  var returnArray = numArray.reduce((accumulator, number, index) => {
+    if (index % 5 == 0) {
+      accumulator.push(number);
+    } else {
+      accumulator[Math.floor(index / 5)] += number;
+    }
+    return accumulator;
+  }, []);
+  console.log("returnArray ", returnArray);
+  return returnArray;
 }
 
 function getRandomValues() {
@@ -36,14 +49,18 @@ function getRandomValues() {
   // a typical 1024 bit key requires 1024bits/5.9 bits per character = 174 characters required, rounded up.
   //We have plenty, with 10 * 20 = 200 characters.
 
-  //For the image we have 128x128 RGB pixels. That is log(255 * 3)/log(2) = 10 bits per pixel.
-  // There are 16384 pixels * 10, = 163840 characters needed.
+  //For the image we have 128x128 RGB pixels. That is log(255) /log(2) * 3 = 24 bits per pixel.
+  // There are 16384 pixels * 24, = 393,216 characters needed. The max request is 10,000 and 20, which is 200,000.
+  // There is not enough data without multiple requests.
+
+  randomData = "";
   fetch(
-    "https://www.random.org/strings/?num=8192&len=20&digits=on&upperalpha=on&loweralpha=on&unique=off&format=plain&rnd=new",
+    "https://www.random.org/strings/?num=10000&len=20&digits=on&upperalpha=on&loweralpha=on&unique=off&format=plain&rnd=new",
+    //"./randomdata.txt",
     {
       method: "GET",
       headers: new Headers({
-        "User-Agent": "roshkins@gmail.com"
+        "User-Agent": "junji@example.tld"
       }),
       mode: "cors",
       cache: "default"
@@ -52,23 +69,45 @@ function getRandomValues() {
     .then(body => {
       return body.text();
     })
-    .then(text => {
-      text = text.replace(/ \n/, "");
-      console.log(text);
-      var key = cryptico.generateRSAKey(text, 1024);
-      console.log(key);
-      document.getElementById("crypto").innerHTML =
-        "Public key: <br> " + cryptico.publicKeyString(key);
+    .then(resp => {
+      randomData += resp;
+      fetch(
+        //"https://www.random.org/strings/?num=10000&len=20&digits=on&upperalpha=on&loweralpha=on&unique=off&format=plain&rnd=new",
+        "./randomdata.txt",
+        {
+          method: "GET",
+          headers: new Headers({
+            "User-Agent": "junji@example.tld"
+          }),
+          mode: "cors",
+          cache: "default"
+        }
+      )
+        .then(body => {
+          return body.text();
+        })
+        .then(text => {
+          randomData += text;
 
-      var randNum = parseNum(text);
-      var cvs = document.getElementById("cvs");
-      var context = cvs.getContext("2d");
-      var imageData = context.getImageData(0, 0, 128, 128);
-      imageData.data.forEach((num, index) => {
-        // Only allow RGB to be random
-        imageData.data[index] = index % 4 == 3 ? 255 : randNum.pop() + 128;
-      });
-      context.putImageData(imageData, 0, 0);
+          newRand = randomData.replace(/ \n/, "");
+          console.log(newRand);
+          textStuff = newRand;
+          var key = cryptico.generateRSAKey(newRand, 1024);
+          console.log(key);
+
+          document.getElementById("crypto").innerHTML =
+            "Public key: <br> " + cryptico.publicKeyString(key);
+
+          var randNum = parseNum(newRand);
+          var cvs = document.getElementById("cvs");
+          var context = cvs.getContext("2d");
+          var imageData = context.getImageData(0, 0, 128, 128);
+          imageData.data.forEach((num, index) => {
+            // Only allow RGB to be random
+            imageData.data[index] = index % 4 == 3 ? 255 : randNum.pop();
+          });
+          context.putImageData(imageData, 0, 0);
+        });
     });
 }
 getRandomValues();
